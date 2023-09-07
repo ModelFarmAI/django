@@ -15,6 +15,7 @@ An example: i18n middleware would need to distinguish caches by the
 "Accept-language" header.
 """
 import time
+import re
 from collections import defaultdict
 
 from django.conf import settings
@@ -353,7 +354,7 @@ def _generate_cache_key(request, method, headerlist, key_prefix):
         value = request.META.get(header)
         if value is not None:
             ctx.update(value.encode())
-    url = md5(request.build_absolute_uri().encode("ascii"), usedforsecurity=False)
+    url = md5(re.sub(r':[0-9]*', "", request.build_absolute_uri()).encode("ascii"), usedforsecurity=False)
     cache_key = "views.decorators.cache.cache_page.%s.%s.%s.%s" % (
         key_prefix,
         method,
@@ -365,7 +366,7 @@ def _generate_cache_key(request, method, headerlist, key_prefix):
 
 def _generate_cache_header_key(key_prefix, request):
     """Return a cache key for the header cache."""
-    url = md5(request.build_absolute_uri().encode("ascii"), usedforsecurity=False)
+    url = md5(re.sub(r':[0-9]*', "", request.build_absolute_uri()).encode("ascii"), usedforsecurity=False)
     cache_key = "views.decorators.cache.cache_header.%s.%s" % (
         key_prefix,
         url.hexdigest(),
