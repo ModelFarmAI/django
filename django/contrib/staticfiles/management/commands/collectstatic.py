@@ -80,6 +80,13 @@ class Command(BaseCommand):
             help="Create a symbolic link to each file instead of copying.",
         )
         parser.add_argument(
+            "--rel-link"
+            "--link-relative",
+            action="store_true",
+            dest="rel_link",
+            help="Create a symbolic link to each file instead of copying.",
+        )
+        parser.add_argument(
             "--no-default-ignore",
             action="store_false",
             dest="use_default_ignore_patterns",
@@ -96,6 +103,7 @@ class Command(BaseCommand):
         self.interactive = options["interactive"]
         self.verbosity = options["verbosity"]
         self.symlink = options["link"]
+        self.rel_symlink = options["rel_link"]
         self.clear = options["clear"]
         self.dry_run = options["dry_run"]
         ignore_patterns = options["ignore_patterns"]
@@ -116,7 +124,7 @@ class Command(BaseCommand):
         if self.clear:
             self.clear_dir("")
 
-        if self.symlink:
+        if self.symlink or self.rel_symlink:
             handler = self.link_file
         else:
             handler = self.copy_file
@@ -344,7 +352,10 @@ class Command(BaseCommand):
             try:
                 if os.path.lexists(full_path):
                     os.unlink(full_path)
-                os.symlink(source_path, full_path)
+                if self.rel_symlink:
+                    os.symlink(os.path.relpath(source_path, os.path.dirname(full_path)), full_path)
+                else:
+                    os.symlink(source_path, full_path)
             except NotImplementedError:
                 import platform
 
